@@ -72,7 +72,7 @@ function Stages() {
                 <span className={`pill ${open ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : tally ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' : 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300'}`}>{open ? 'Open' : tally ? 'Closed' : 'Counting'}</span>
               </div>
               <p className="mt-1 text-sm text-slate-500">{formatDate(b.opensAt)} to {formatDate(b.closesAt)}</p>
-              <div className="mt-4 flex-1">{tally ? <ChoiceBar counts={tally.totals} choices={b.choices} /> : <p className="text-sm text-slate-500">{open ? 'Results are published when the vote closes.' : 'Results are being published.'}</p>}</div>
+              <div className="mt-4 flex-1">{tally ? <ChoiceBar counts={tally.totals} choices={b.choices} labels={b.choiceLabels} /> : <p className="text-sm text-slate-500">{open ? 'Results are published when the vote closes.' : 'Results are being published.'}</p>}</div>
               <Link to={`/stage/${m.index}`} className="mt-4 inline-flex items-center gap-1 text-sm font-semibold">Details and recount <ArrowRight className="size-4" /></Link>
             </li>
           )

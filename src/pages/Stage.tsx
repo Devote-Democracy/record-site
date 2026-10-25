@@ -38,7 +38,7 @@ function Stage() {
         <h2 className="text-xl">Result</h2>
         {tally ? (
           <>
-            <div className="mt-4"><ChoiceBar counts={tally.totals} choices={b.choices} /></div>
+            <div className="mt-4"><ChoiceBar counts={tally.totals} choices={b.choices} labels={b.choiceLabels} /></div>
             <p className="mt-3 text-sm text-slate-500">{(Object.values(tally.totals) as number[]).reduce((n, v) => n + v, 0).toLocaleString()} votes counted. The log holds {ballots.length.toLocaleString()} ballot entries for this vote: votes, demographic rows, changed votes (only each voter’s last counts) and rows that stay private.</p>
           </>
         ) : (
@@ -60,8 +60,8 @@ function Stage() {
                   {[...t.rows].sort((a: any, z: any) => String(a.value).localeCompare(String(z.value))).map((r: any) => (
                     <li key={String(r.value)}>
                       <div className="mb-1 text-sm font-medium">{String(r.value)}</div>
-                      <ChoiceBar counts={r.counts} choices={b.choices} legend={false} />
-                      <div className="mt-1 text-xs text-slate-500">{b.choices.map((c: string) => `${choiceLabel(c)} ${r.counts[c] ?? 0}`).join(' · ')}</div>
+                      <ChoiceBar counts={r.counts} choices={b.choices} labels={b.choiceLabels} legend={false} />
+                      <div className="mt-1 text-xs text-slate-500">{b.choices.map((c: string) => `${choiceLabel(c, b.choiceLabels)} ${r.counts[c] ?? 0}`).join(' · ')}</div>
                     </li>
                   ))}
                 </ul>
@@ -110,7 +110,7 @@ function Recount({ index }: { index: number }) {
             <Check ok={!errors.some((e) => e.message.includes('final ballot') || e.message.includes('not revealed'))}>Exactly each voter’s last ballot was published; none was dropped or added.</Check>
             <Check ok={!errors.some((e) => e.message.startsWith('Invalid ballot'))}>Every ballot carries a valid anonymous proof that it comes from this vote’s frozen electorate, binds its contents, and is its voter’s only one per bill.</Check>
             <Check ok={result.disclosureViolations.length === 0}>No published group is small or uniform enough to single anyone out.</Check>
-            <Check ok={result.tallyMatches}>The published result equals the recount: {Object.entries(result.totals).map(([c, n]) => `${choiceLabel(c)} ${n}`).join(', ')}.</Check>
+            <Check ok={result.tallyMatches}>The published result equals the recount: {Object.entries(result.totals).map(([c, n]) => `${choiceLabel(c, state.log.entries[index]?.envelope.body.choiceLabels)} ${n}`).join(', ')}.</Check>
           </ul>
           {errors.length > 0 && <div className="mt-4"><Notice tone="bad">{errors.length} problem{errors.length === 1 ? '' : 's'} found: {errors.slice(0, 5).map((e) => e.message).join(' · ')}</Notice></div>}
           {warnings.map((w) => <p key={w.message} className="mt-3 text-xs text-slate-500">Note: {w.message}</p>)}
