@@ -1,0 +1,14 @@
+/**
+ * record.devotedemocracy.com: a static site (no Worker code). Every check runs in the
+ * visitor's browser against the public log; the site itself holds no data.
+ * Not deployed yet: deploy once the log's public bucket and key exist (see README).
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "record-site",
+  "compatibility_date": "2026-10-25",
+  "assets": { "directory": "./dist", "not_found_handling": "single-page-application" },
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [{ "pattern": "record.devotedemocracy.com", "custom_domain": true }]
+}

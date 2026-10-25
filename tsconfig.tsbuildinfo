@@ -1,0 +1,1 @@
+{"root":["./src/config.ts","./src/main.tsx","./src/record.tsx","./src/trust.ts","./src/components/bars.tsx","./src/components/layout.tsx","./src/components/status.tsx","./src/pages/entries.tsx","./src/pages/entry.tsx","./src/pages/home.tsx","./src/pages/how.tsx","./src/pages/stage.tsx","./scripts/make-demo-log.ts","./vite.config.ts"],"version":"5.9.3"}

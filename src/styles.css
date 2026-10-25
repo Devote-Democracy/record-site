@@ -1,0 +1,33 @@
+@import 'tailwindcss';
+
+/* Devote palette (ballot-box logo): blue box, violet and coral backdrop. Titles in Recoleta when the
+   webfont licence is confirmed (see the admin Legal register); until then a serif fallback. */
+@theme {
+  --font-sans: 'Raleway', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  --font-display: 'Recoleta', Georgia, 'Times New Roman', serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --color-brand-50: #eef6fc;
+  --color-brand-100: #d6eaf7;
+  --color-brand-200: #a9d2ee;
+  --color-brand-400: #2f8fcd;
+  --color-brand-500: #0b75bb;
+  --color-brand-600: #04629f;
+  --color-brand-700: #054f80;
+  --color-violet-brand: #9b8cf5;
+  --color-coral-brand: #e0807d;
+}
+
+@layer base {
+  html { color-scheme: light dark; }
+  body { @apply bg-white text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200; }
+  h1, h2, h3 { font-family: var(--font-display); @apply font-normal tracking-tight text-slate-900 dark:text-white; }
+  a { @apply text-brand-600 hover:underline dark:text-brand-200; }
+  :focus-visible { @apply outline-2 outline-offset-2 outline-brand-500; }
+}
+
+@layer components {
+  .card { @apply rounded-2xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900; }
+  .pill { @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium; }
+  .btn { @apply inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white no-underline shadow-xs hover:bg-brand-600 hover:no-underline disabled:opacity-60; }
+  .btn-quiet { @apply inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 no-underline hover:bg-slate-50 hover:no-underline dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800; }
+}
