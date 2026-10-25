@@ -26,8 +26,17 @@ verifier key). See `.env.example`.
 
 ## Deploy
 
-Cloudflare Workers static assets (`wrangler.jsonc`), on `record.devotedemocracy.com`. **Not deployed
-yet:** it needs the log's public bucket and key from the vote_ledger service first.
+Cloudflare Workers static assets (`wrangler.jsonc`), on `record.devotedemocracy.com`. The production
+build reads the record's public address and log key from `.env.production` (public values).
+
+```bash
+npm run build && npx wrangler deploy
+```
+
+The record's keys, for anyone checking it independently:
+- Log: `record.devotedemocracy.com/log/v1+0834d4ff+AbbsGtORKmrJITKGOAfNsKXnaJT7g/2jm4C6NiqvDM3w`
+- Witness: `witness.devotedemocracy.com/w1+07c1b251+BEUi+0pgTE0UdcXBlE8Lz43kG8PzVeG0oLp3d8GRbwFj`
+- Tiles: `https://storage.googleapis.com/devote-public-record/log/v1/`
 
 ## Licence
 
