@@ -81,8 +81,8 @@ const manifestIndex = add({
     franchises: ['gb-ukparl'],
     groupRoots: { 'gb-ukparl': { root: ROOT, size: VOTERS, depth: group.depth } },
     encryption: { keyId: KEY, publicKey: toBase64Url(rand(32)) },
-    disclosure: { k: 5, l: 2, ladders: { area: ['constituency', 'region', 'nation'], ageBand: ['5y', '10y', '20y'] } },
-    dimensions: ['ageBand'],
+    disclosure: { k: 5, l: 2, ladders: { area: ['constituency', 'region', 'nation'], age: ['5y', '10y', '20y'] }, minChoiceSupport: 1 },
+    dimensions: ['age'],
     admissionKeys: [{ keyId: 'demo-admission-1', publicKey: toBase64Url(admissionPub) }],
     carryFrom: [],
     retentionUntil: '2028-11-09T09:00Z',
@@ -130,7 +130,8 @@ const regions = [
   { region: 'E12000003', constituencies: ['E14001063', 'E14001064', 'E14001065'] },
   { region: 'E12000007', constituencies: ['E14001100', 'E14001101', 'E14001102'] },
 ]
-const ages = [['18-22', '18-27', '18-37'], ['33-37', '28-37', '18-37'], ['48-52', '48-57', '38-57'], ['63-67', '58-67', '58-77']]
+// SPEC.md Appendix A ladders.
+const ages = [['20-24', '20-29', '16-39'], ['35-39', '30-39', '16-39'], ['45-49', '40-49', '40-59'], ['60-64', '60-69', '60-79']]
 const finals = new Map<string, number>()
 for (let v = 0; v < 48; v++) {
   const r = pick(regions)
@@ -140,7 +141,7 @@ for (let v = 0; v < 48; v++) {
   // A few voters change their mind; only the last ballot counts.
   if (v % 9 === 0) finals.set(`m${v}`, await cast('main', v, { choice: { value: choice === 'aye' ? 'no' : 'aye' }, carry: { value: true }, area }))
   const a = pick(ages)
-  finals.set(`d${v}`, await cast('demographic', v, { choice: { value: choice }, carry: { value: true }, value: { '5y': a[0]!, '10y': a[1]!, '20y': a[2]! } }, 'ageBand'))
+  finals.set(`d${v}`, await cast('demographic', v, { choice: { value: choice }, carry: { value: true }, value: { '5y': a[0]!, '10y': a[1]!, '20y': a[2]! } }, 'age'))
 }
 
 // Reveal: area at region, age at 20-year bands (what disclosure control would choose at this size).

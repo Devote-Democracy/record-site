@@ -20,6 +20,6 @@ export function trustLines(schemes: Record<string, string | string[]> | undefine
   return out
 }
 
-const FIELD_LABELS: Record<string, string> = { area: 'Area', ageBand: 'Age', ethnicity: 'Ethnicity', religion: 'Religion', sex: 'Sex', disability: 'Disability' }
+const FIELD_LABELS: Record<string, string> = { area: 'Area', age: 'Age', ageBand: 'Age', ethnicity: 'Ethnicity', religion: 'Religion', sex: 'Sex', disability: 'Disability' }
 const LEVEL_LABELS: Record<string, string> = { constituency: 'constituency', region: 'region', nation: 'nation', '5y': '5-year bands', '10y': '10-year bands', '20y': '20-year bands', detailed: 'detailed', broad: 'broad groups' }
 export const tableTitle = (t: { rowType: string; dimension?: string; field: string; level: string }) => `${FIELD_LABELS[t.dimension ?? t.field] ?? t.dimension ?? t.field} (${LEVEL_LABELS[t.level] ?? t.level})`
