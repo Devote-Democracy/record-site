@@ -9,15 +9,23 @@ export default function HomePage() {
     <div className="space-y-10">
       <section className="max-w-3xl">
         <h1 className="text-4xl sm:text-5xl">Every vote on Devote, checkable by anyone.</h1>
-        <p className="mt-4 text-lg text-slate-600 dark:text-slate-300">
-          Votes are anonymous. The record of them is public and permanent, and anchored in Bitcoin and Ethereum, so nobody (Devote included) can change it without being caught. This page has just checked it, in your browser.
-        </p>
+        <Lede />
       </section>
       <WithRecord>
         <Verified />
         <Stages />
       </WithRecord>
     </div>
+  )
+}
+
+function Lede() {
+  const state = useRecord()
+  const anchored = state.status === 'ok' && state.log.entries.some((e) => e.envelope.type === 'anchor')
+  return (
+    <p className="mt-4 text-lg text-slate-600 dark:text-slate-300">
+      Votes are anonymous. The record of them is public and permanent, {anchored ? 'and anchored in public blockchains (Bitcoin and Ethereum),' : 'and is being anchored in public blockchains (Bitcoin and Ethereum),'} so nobody (Devote included) can change it without being caught. This page has just checked it, in your browser.
+    </p>
   )
 }
 
