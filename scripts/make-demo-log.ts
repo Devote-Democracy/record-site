@@ -26,6 +26,10 @@ import {
   type Envelope,
   type LoggedEntry,
 } from '@devotedemocracy/record-verifier'
+import { releaseSemaphore, semaphoreMessage, semaphoreScope } from '@devotedemocracy/record-verifier/semaphore'
+import { Group } from '@semaphore-protocol/group'
+import { Identity } from '@semaphore-protocol/identity'
+import { generateProof } from '@semaphore-protocol/proof'
 
 const OUT = join(import.meta.dirname, '..', 'public', 'demo')
 const enc = new TextEncoder()
@@ -47,17 +51,19 @@ const pick = <T,>(xs: T[]) => xs[Math.floor(next() * xs.length)]!
 add({ v: 1, type: 'appBuild', body: { platform: 'ios', version: '0.0.0-demo', build: '1', sha256: '0'.repeat(64), repository: 'DEMO' } })
 add({ v: 1, type: 'appBuild', body: { platform: 'android', version: '0.0.0-demo', build: '1', sha256: '1'.repeat(64), repository: 'DEMO' } })
 
-// Admissions: 60 demo credentials.
+// Admissions: 60 demo voters, each with a real Semaphore identity.
 const VOTERS = 60
+const identities = Array.from({ length: VOTERS }, () => new Identity())
+const group = new Group(identities.map((id) => id.commitment))
 for (let i = 0; i < VOTERS; i++) {
-  const body: Record<string, any> = { franchise: 'gb-ukparl', commitment: String(10_000 + i) }
+  const body: Record<string, any> = { franchise: 'gb-ukparl', commitment: identities[i]!.commitment.toString() }
   const sig = new Uint8Array(await crypto.subtle.sign({ name: 'Ed25519' }, admissionKey.privateKey, signedPayload('admission', { ...body, signatures: [] }) as BufferSource))
   body.signatures = [{ alg: 'ed25519', keyId: 'demo-admission-1', sig: toBase64Url(sig) }]
   add({ v: 1, type: 'admission', body })
 }
 
 const BILL = 'demo-bill-1'
-const ROOT = '987654321'
+const ROOT = group.root.toString()
 const KEY = 'demo-stage-key-1'
 const manifestIndex = add({
   v: 1,
@@ -73,7 +79,7 @@ const manifestIndex = add({
     graceSeconds: 600,
     choices: ['aye', 'no', 'abstain'],
     franchises: ['gb-ukparl'],
-    groupRoots: { 'gb-ukparl': { root: ROOT, size: VOTERS, depth: 16 } },
+    groupRoots: { 'gb-ukparl': { root: ROOT, size: VOTERS, depth: group.depth } },
     encryption: { keyId: KEY, publicKey: toBase64Url(rand(32)) },
     disclosure: { k: 5, l: 2, ladders: { area: ['constituency', 'region', 'nation'], ageBand: ['5y', '10y', '20y'] } },
     dimensions: ['ageBand'],
@@ -86,7 +92,7 @@ const manifestIndex = add({
 type Secret = { values: Record<string, Record<string, string | boolean>>; salts: Record<string, Record<string, Uint8Array>> }
 const secrets = new Map<number, Secret>()
 
-async function cast(rowType: 'main' | 'demographic', nullifier: string, values: Secret['values'], dimension?: string) {
+async function cast(rowType: 'main' | 'demographic', voter: number, values: Secret['values'], dimension?: string) {
   const commitments: Record<string, Record<string, string>> = {}
   const salts: Secret['salts'] = {}
   for (const [field, levels] of Object.entries(values)) {
@@ -99,15 +105,18 @@ async function cast(rowType: 'main' | 'demographic', nullifier: string, values: 
     }
   }
   const ct = toBase64Url(rand(96))
+  const scope = rowType === 'main' ? `bill:${BILL}` : `bill:${BILL}/dim:${dimension}`
+  const message = await ballotMessage(commitments, ct)
+  const proof = await generateProof(identities[voter]!, group, semaphoreMessage(message), await semaphoreScope(scope))
   const body: Record<string, any> = {
     manifest: manifestIndex,
     rowType,
-    scope: rowType === 'main' ? `bill:${BILL}` : `bill:${BILL}/dim:${dimension}`,
+    scope,
     franchise: 'gb-ukparl',
     groupRoot: ROOT,
-    nullifier,
-    message: await ballotMessage(commitments, ct),
-    proof: { merkleTreeDepth: 16, points: Array.from({ length: 8 }, () => String(Math.floor(next() * 1e15))) },
+    nullifier: proof.nullifier,
+    message,
+    proof: { merkleTreeDepth: proof.merkleTreeDepth, points: proof.points },
     commitments,
     ciphertext: { keyId: KEY, enc: toBase64Url(rand(32)), ct },
   }
@@ -127,12 +136,11 @@ for (let v = 0; v < 48; v++) {
   const r = pick(regions)
   const choice = next() < 0.55 ? 'aye' : next() < 0.85 ? 'no' : 'abstain'
   const area = { constituency: pick(r.constituencies), region: r.region, nation: 'E92000001' }
-  const nullifier = String(500_000 + v)
-  finals.set(`m${v}`, await cast('main', nullifier, { choice: { value: choice }, carry: { value: true }, area }))
+  finals.set(`m${v}`, await cast('main', v, { choice: { value: choice }, carry: { value: true }, area }))
   // A few voters change their mind; only the last ballot counts.
-  if (v % 9 === 0) finals.set(`m${v}`, await cast('main', nullifier, { choice: { value: choice === 'aye' ? 'no' : 'aye' }, carry: { value: true }, area }))
+  if (v % 9 === 0) finals.set(`m${v}`, await cast('main', v, { choice: { value: choice === 'aye' ? 'no' : 'aye' }, carry: { value: true }, area }))
   const a = pick(ages)
-  finals.set(`d${v}`, await cast('demographic', String(700_000 + v), { choice: { value: choice }, carry: { value: true }, value: { '5y': a[0]!, '10y': a[1]!, '20y': a[2]! } }, 'ageBand'))
+  finals.set(`d${v}`, await cast('demographic', v, { choice: { value: choice }, carry: { value: true }, value: { '5y': a[0]!, '10y': a[1]!, '20y': a[2]! } }, 'ageBand'))
 }
 
 // Reveal: area at region, age at 20-year bands (what disclosure control would choose at this size).
@@ -143,7 +151,8 @@ const rows = [...finals.entries()].map(([key, i]) => {
 })
 const revealIndex = add({ v: 1, type: 'reveal', body: { manifest: manifestIndex, rows } })
 
-const recount = await recountStage(log, manifestIndex)
+const { verifyBallotProof } = await import('@devotedemocracy/record-verifier/semaphore')
+const recount = await recountStage(log, manifestIndex, { verifyProof: verifyBallotProof })
 add({
   v: 1,
   type: 'tally',
@@ -170,4 +179,5 @@ for (let t = 0; t * TILE_WIDTH < raw.length; t++) {
   write(entryBundlePath(t, slice.length), buildEntryBundle(slice))
 }
 write('key.txt', await verifierKeyString(LOG_ORIGIN, logPub))
+await releaseSemaphore()
 console.log(`demo log: ${raw.length} entries; totals ${JSON.stringify(recount.totals)}; issues ${recount.issues.filter((i) => i.severity === 'error').length} errors`)

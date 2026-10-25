@@ -86,7 +86,12 @@ function Recount({ index }: { index: number }) {
   const state = useRecord()
   const [result, setResult] = useState<StageRecount | 'running' | null>(null)
   if (state.status !== 'ok') return null
-  const run = async () => { setResult('running'); setResult(await recountStage(state.log.entries, index)) }
+  const run = async () => {
+    setResult('running')
+    // The Groth16 verifier is large, so it loads only when someone recounts.
+    const { verifyBallotProof } = await import('@devotedemocracy/record-verifier/semaphore')
+    setResult(await recountStage(state.log.entries, index, { verifyProof: verifyBallotProof }))
+  }
   const errors = result && result !== 'running' ? result.issues.filter((i) => i.severity === 'error') : []
   const warnings = result && result !== 'running' ? result.issues.filter((i) => i.severity === 'warning') : []
   return (
@@ -96,19 +101,19 @@ function Recount({ index }: { index: number }) {
           <h2 className="text-xl">Recount it yourself</h2>
           <p className="mt-1 text-sm text-slate-500">Runs in your browser on the entries already checked against the signed log.</p>
         </div>
-        <button className="btn" onClick={run} disabled={result === 'running'}><Play className="size-4" /> {result ? 'Recount again' : 'Recount'}</button>
+        <button className="btn" onClick={run} disabled={result === 'running'}><Play className="size-4" /> {result === 'running' ? 'Checking every proof…' : result ? 'Recount again' : 'Recount'}</button>
       </div>
       {result && result !== 'running' && (
         <>
           <ul className="mt-5 space-y-2">
             <Check ok={!errors.some((e) => e.message.includes('commitment'))}>Every published value matches what was committed during the vote.</Check>
             <Check ok={!errors.some((e) => e.message.includes('final ballot') || e.message.includes('not revealed'))}>Exactly each voter’s last ballot was published; none was dropped or added.</Check>
-            <Check ok={!errors.some((e) => e.message.startsWith('Invalid ballot'))}>Every ballot belongs to this vote’s frozen electorate and binds its contents.</Check>
+            <Check ok={!errors.some((e) => e.message.startsWith('Invalid ballot'))}>Every ballot carries a valid anonymous proof that it comes from this vote’s frozen electorate, binds its contents, and is its voter’s only one per bill.</Check>
             <Check ok={result.disclosureViolations.length === 0}>No published group is small or uniform enough to single anyone out.</Check>
             <Check ok={result.tallyMatches}>The published result equals the recount: {Object.entries(result.totals).map(([c, n]) => `${choiceLabel(c)} ${n}`).join(', ')}.</Check>
           </ul>
           {errors.length > 0 && <div className="mt-4"><Notice tone="bad">{errors.length} problem{errors.length === 1 ? '' : 's'} found: {errors.slice(0, 5).map((e) => e.message).join(' · ')}</Notice></div>}
-          {warnings.map((w) => <p key={w.message} className="mt-3 text-xs text-slate-500">Not yet checked here: {w.message.replace(/\.$/, '')}. Membership-proof checking is the verifier’s next addition.</p>)}
+          {warnings.map((w) => <p key={w.message} className="mt-3 text-xs text-slate-500">Note: {w.message}</p>)}
         </>
       )}
     </section>

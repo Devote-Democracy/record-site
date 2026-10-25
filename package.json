@@ -18,12 +18,15 @@
   },
   "dependencies": {
     "@devotedemocracy/record-verifier": "github:Devote-Democracy/record-verifier",
+    "@semaphore-protocol/proof": "^4.14.5",
     "lucide-react": "0.577.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-router": "7.18.4"
   },
   "devDependencies": {
+    "@semaphore-protocol/group": "^4.14.5",
+    "@semaphore-protocol/identity": "^4.14.5",
     "@tailwindcss/vite": "4.3.3",
     "@types/node": "22.19.9",
     "@types/react": "19.3.0",
