@@ -17,7 +17,7 @@ the visitor's browser against the public log, using the open-source
 
 ```bash
 npm install
-npm run demo        # writes a synthetic DEMO log to public/demo/ and starts the site against it
+npm run demo        # writes a synthetic DEMO log to demo-public/demo/ and starts the site against it (never in production builds)
 npm run build       # typecheck + bundle to dist/
 ```
 

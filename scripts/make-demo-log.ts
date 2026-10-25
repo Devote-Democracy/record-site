@@ -1,5 +1,5 @@
 /**
- * Writes a DEMO log to public/demo/ (checkpoint, entry tiles, verifier key) so the site can
+ * Writes a DEMO log to demo-public/demo/ (checkpoint, entry tiles, verifier key) so the site can
  * be developed and tested before the real log exists. Everything is synthetic and every
  * entry says so. Built with the verifier's own functions, so the site exercises the real
  * verification path end to end.
@@ -31,7 +31,8 @@ import { Group } from '@semaphore-protocol/group'
 import { Identity } from '@semaphore-protocol/identity'
 import { generateProof } from '@semaphore-protocol/proof'
 
-const OUT = join(import.meta.dirname, '..', 'public', 'demo')
+// Served only in demo mode (vite publicDir), never part of a production build.
+const OUT = join(import.meta.dirname, '..', 'demo-public', 'demo')
 const enc = new TextEncoder()
 const rand = (n: number) => crypto.getRandomValues(new Uint8Array(n))
 
